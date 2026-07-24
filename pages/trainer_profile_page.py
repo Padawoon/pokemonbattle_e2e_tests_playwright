@@ -17,3 +17,7 @@ class TrainerProfilePage(BasePage):
     def check_page_is_profile_page(self):
         expect(self.page).to_have_url(self.URL)
         expect(self.page.get_by_text(f"ID тренера{os.getenv("TRAINER_ID")}"))
+
+    def open_page(self):
+        self.page.goto(self.URL)
+

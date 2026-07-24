@@ -13,5 +13,8 @@ class MainPage(BasePage):
     def trainer_badge(self):
         return self.page.get_by_role("link", name=f"ID {os.getenv("TRAINER_ID")} логотип")
 
+    def open_page(self):
+        self.page.goto(self.URL)
+
     def check_page_is_main_page(self):
         expect(self.page).to_have_url(f"{self.URL}/")

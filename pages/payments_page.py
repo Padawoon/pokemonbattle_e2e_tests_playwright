@@ -36,6 +36,9 @@ class PaymentsPage(BasePage):
         expect(self.page).to_have_url(re.compile(r"/payment/.+"))
         self.element_visible(self.pay_button)
 
+    def open_page(self):
+        self.page.goto(self.URL)
+
     def fill_card_details(
             self,
             number: str | None = None,

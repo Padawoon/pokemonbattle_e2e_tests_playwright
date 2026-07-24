@@ -44,5 +44,9 @@ class PremiumPage(BasePage):
     def confirm_cancel_premium(self):
         self.confirm_cancel_premium_button.click()
 
+    def open_page(self):
+        self.page.goto(self.URL)
+
+
 
 
