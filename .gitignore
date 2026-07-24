@@ -6,3 +6,5 @@ venv
 venv/
 playwright/
 .auth
+__pycache__
+pages/__pycache__/
