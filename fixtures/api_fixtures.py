@@ -4,7 +4,7 @@ from http import HTTPStatus
 import pytest
 import requests
 
-from config.api_config import BASE_URL, LAVKA_BASE_URL
+from config.api_config import BASE_API_URL, LAVKA_BASE_URL
 
 # фикстура для передачи токена в API сессию
 @pytest.fixture(scope="session")
@@ -17,7 +17,7 @@ def api_session():
 @pytest.fixture(scope="session")
 def check_and_cancel_premium(api_session):
     def _cancel_if_premium():
-        response = api_session.get(BASE_URL + "/me")
+        response = api_session.get(BASE_API_URL + "/me")
         assert response.status_code == HTTPStatus.OK
         body = response.json()
         if body.get("data")[0].get("is_premium"):
