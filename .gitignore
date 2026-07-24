@@ -1,10 +1,14 @@
-.idea
+# IDE
 .idea/
-.venv
+
+# Виртуальные окружения
 .venv/
-venv
 venv/
+
+# Тесты и автотесты
 playwright/
-.auth
-__pycache__
-pages/__pycache__/
+.auth/
+
+# Кэш Python (исключает __pycache__ абсолютно везде, в любых вложенных папках)
+**/__pycache__/
+*.pyc
