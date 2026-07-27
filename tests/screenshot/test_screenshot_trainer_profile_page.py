@@ -1,10 +1,12 @@
 import re
 
+import allure
 from playwright.sync_api import expect
 
 from pages.trainer_profile_page import TrainerProfilePage
 
-
+@allure.title("Проверка вёрстки характеристик тренера")
+@allure.tag("TrainerPage")
 def test_trainer_stats_visual(page, assert_snapshot):
     profile_page = TrainerProfilePage(page)
     profile_page.open_page()

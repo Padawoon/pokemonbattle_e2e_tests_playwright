@@ -1,8 +1,11 @@
+import allure
 import pytest
 from playwright.sync_api import expect
 
 from pages.premium_page import PremiumPage
 
+@allure.title("Проверка вёрстки формы покупки премиума с динамикой поля Дни")
+@allure.tag("PremiumPage")
 @pytest.mark.parametrize(
     "test_days, snapshot_name",
     [
@@ -10,7 +13,8 @@ from pages.premium_page import PremiumPage
         ("155", "buy_premium_form_30_to_180_days.png"),
         ("300", "buy_premium_form_180_to_365_days.png"),
         ("366", "buy_premium_form_more_than_365_days.png")
-    ]
+    ],
+    ids=["less_than_30", "30_to_180", "180_to_365", "more_than_365"],
 )
 def test_buy_premium_visual(page, assert_snapshot, test_days, snapshot_name):
 
