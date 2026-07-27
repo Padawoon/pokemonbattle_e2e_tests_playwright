@@ -12,7 +12,7 @@ from pages.premium_page import PremiumPage
         ("366", "buy_premium_form_more_than_365_days.png")
     ]
 )
-def test_buy_premium_less_than_30_days_visual(page, assert_snapshot, test_days, snapshot_name):
+def test_buy_premium_visual(page, assert_snapshot, test_days, snapshot_name):
 
     premium_page = PremiumPage(page)
     premium_page.open_page()
