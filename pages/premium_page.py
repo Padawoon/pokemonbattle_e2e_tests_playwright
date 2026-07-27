@@ -34,6 +34,14 @@ class PremiumPage(BasePage):
     def cancel_premium_success_notify(self):
         return self.page.get_by_text("Вы отменили подписку :(", exact=True)
 
+    @property
+    def buy_premium_form(self):
+        return self.page.locator('.k_page_main_premium')
+
+    @property
+    def premium_per_days(self):
+        return self.page.locator('.k_skidka_premium')
+
     def check_page_is_premium_page(self):
         expect(self.page).to_have_url(self.URL)
         self.element_visible(self.heading)
