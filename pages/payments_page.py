@@ -32,6 +32,10 @@ class PaymentsPage(BasePage):
     def pay_button(self):
         return self.page.get_by_role("button", name="Оплатить")
 
+    @property
+    def card_details_form(self):
+        return self.page.locator('.payment_form_card_form')
+
     def check_page_is_payments_page(self):
         expect(self.page).to_have_url(re.compile(r"/payment/.+"))
         self.element_visible(self.pay_button)
@@ -51,10 +55,10 @@ class PaymentsPage(BasePage):
         cvc = cvc or os.getenv("SUCCESS_CVV")
         holder = holder or os.getenv("CARD_NAME")
 
-        self.card_number_input.fill(number)
+        self.card_number_input.press_sequentially(number, delay=50)
         self.card_expiry_input.fill(expiry)
         self.card_cvc_input.fill(cvc)
-        self.card_holder_input.fill(holder)
+        self.card_holder_input.press_sequentially(holder, delay=50)
 
     def submit_payment(self):
         self.pay_button.click()
