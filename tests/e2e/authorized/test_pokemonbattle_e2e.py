@@ -18,7 +18,7 @@ class TestTrainerUi:
         profile_page = TrainerProfilePage(page)
 
         with allure.step("Переход на главную страницу"):
-            main_page.open(MainPage.URL)
+            main_page.open_page()
             main_page.check_page_is_main_page()
 
         with allure.step("Проверка корректной авторизации тестового тренера"):
@@ -36,7 +36,7 @@ class TestTrainerUi:
         premium_page = PremiumPage(page)
 
         with allure.step("Переход в профиль тренера"):
-            main_page.open(MainPage.URL)
+            main_page.open_page()
             main_page.check_page_is_main_page()
             main_page.trainer_badge.click()
             profile_page.check_page_is_profile_page()
@@ -52,7 +52,7 @@ class TestTrainerUi:
         profile_page = TrainerProfilePage(page)
 
         with allure.step("Переход в профиль тренера"):
-            main_page.open(MainPage.URL)
+            main_page.open_page()
             main_page.check_page_is_main_page()
             main_page.trainer_badge.click()
             profile_page.check_page_is_profile_page()
@@ -68,7 +68,7 @@ class TestTrainerUi:
         test_days = "15"
 
         with allure.step("Переход на страницу покупки премиума"):
-            premium_page.open(PremiumPage.URL)
+            premium_page.open_page()
             premium_page.check_page_is_premium_page()
             premium_page.element_visible(premium_page.heading)
 
@@ -99,7 +99,7 @@ class TestTrainerUi:
     def test_cancel_premium_success(self, page):
         premium_page = PremiumPage(page)
         with allure.step("Переход на страницу премиума"):
-            premium_page.open(premium_page.URL)
+            premium_page.open_page()
             premium_page.check_page_is_premium_page()
 
         with allure.step("Нажатие кнопки отмены премиума"):
