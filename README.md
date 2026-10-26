@@ -1,93 +1,158 @@
-# pokemonbattle_e2e_tests_playwright
+# Pokemon Battle — UI-автотесты на Playwright + Pytest
 
+Учебный проект по автоматизации тестирования веб-приложения [«Битва Покемонов»](https://pokemonbattle.ru) — тренажёра для QA-инженеров. Тесты написаны во время прохождения курса по автоматизации на Python.
 
+Проект покрывает:
 
-## Getting started
+- **E2E-сценарии**: авторизация, навигация по профилю тренера, покупка и отмена подписки Pokemon Premium (включая оплату картой и подтверждение 3DS-кодом);
+- **скриншот-тесты**: сравнение вёрстки ключевых форм и блоков с эталонными снимками.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Стек
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+| Инструмент | Для чего используется |
+|---|---|
+| [Python 3.12+](https://www.python.org/) | Язык тестов (в коде есть f-строки с вложенными кавычками одного типа, а они работают только с 3.12) |
+| [Pytest](https://docs.pytest.org/) | Тестовый раннер, фикстуры, параметризация |
+| [Playwright](https://playwright.dev/python/) + [pytest-playwright](https://pypi.org/project/pytest-playwright/) | Управление браузером, локаторы, web-first ассерты `expect` |
+| [pytest-playwright-snapshot](https://pypi.org/project/pytest-playwright-snapshot/) | Скриншот-тестирование через фикстуру `assert_snapshot` (сравнение выполняется через `pixelmatch`) |
+| [pytest-order](https://pypi.org/project/pytest-order/) | Управление порядком запуска тестов (`--order-scope=module`) |
+| [pytest-base-url](https://pypi.org/project/pytest-base-url/) | Базовый URL для тестов |
+| [Allure](https://allurereport.org/docs/pytest/) (`allure-pytest`) | Отчёты: шаги `allure.step`, заголовки, сьюты, теги |
+| [Requests](https://requests.readthedocs.io/) | API-вызовы для подготовки тестовых данных |
+| [python-dotenv](https://pypi.org/project/python-dotenv/) | Загрузка учётных данных и тестовых данных из `.env` |
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Структура проекта
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.qa.studio/python-auto-qa/workspaces/deymos/EJTNB/pokemonbattle_e2e_tests_playwright.git
-git branch -M main
-git push -uf origin main
+.
+├── config/
+│   └── api_config.py              # базовые URL API (api.pokemonbattle.ru, lavka.pokemonbattle.ru)
+├── fixtures/
+│   ├── api_fixtures.py            # API-сессия с trainer_token, сброс премиума до и после тестов
+│   ├── auth_context_fixtures.py   # авторизация один раз за сессию, переиспользование storage_state
+│   └── ui_fixtures.py             # загрузка .env, атрибут data-id для get_by_test_id
+├── helpers/
+│   └── auth_helper.py             # логин через UI, возвращает storage_state
+├── pages/                         # Page Object Model
+│   ├── base_page.py               # базовый класс: открытие страницы, общие проверки
+│   ├── login_page.py
+│   ├── main_page.py
+│   ├── trainer_profile_page.py
+│   ├── premium_page.py
+│   ├── payments_page.py
+│   └── secure_payment_page.py     # страница ввода 3DS-кода и успешной оплаты
+├── tests/
+│   ├── e2e/
+│   │   ├── test_login.py          # авторизация с нуля (без сохранённой сессии)
+│   │   └── authorized/            # тесты под авторизованным тренером
+│   │       ├── conftest.py
+│   │       └── test_pokemonbattle_e2e.py
+│   └── screenshot/
+│       ├── conftest.py
+│       ├── test_screenshot_buy_premium_form.py
+│       ├── test_screenshot_card_details_form.py
+│       ├── test_screenshot_trainer_profile_page.py
+│       └── __snapshots__/         # эталонные скриншоты (chromium/win32)
+├── conftest.py                    # подключение плагинов с фикстурами
+├── pytest.ini
+└── requirements.txt
 ```
 
-## Integrate with your tools
+## Архитектура и подходы
 
-- [ ] [Set up project integrations](https://gitlab.qa.studio/python-auto-qa/workspaces/deymos/EJTNB/pokemonbattle_e2e_tests_playwright/-/settings/integrations)
+- **Page Object Model.** Каждая страница описана классом, унаследованным от `BasePage`. Локаторы оформлены как `@property`, действия и проверки — как методы (`open_page()`, `check_page_is_*_page()`, `fill_card_details()` и т. д.).
+- **Авторизация один раз за сессию.** Фикстура `auth_state` логинится через UI, кэширует `storage_state` (куки и localStorage), а переопределённая `browser_context_args` подставляет его в каждый новый контекст вместе с вьюпортом 1920×1080. Поэтому тесты в `authorized/` и `screenshot/` стартуют уже авторизованными.
+- **Подготовка данных через API.** Перед тестом покупки фикстура `check_and_cancel_premium` проверяет через `GET /v2/me`, есть ли у тренера премиум, и при необходимости отменяет его через `POST /cancel_premium`. После тестов то же самое повторяется, чтобы тренер остался в исходном состоянии.
+- **Пользовательские локаторы.** В основном `get_by_role` / `get_by_text` / `get_by_placeholder`, CSS и XPath — там, где без них не обойтись. Атрибут для `get_by_test_id` переопределён на `data-id`.
+- **Стабильные скриншоты.** Динамические данные (покеболы, уровень, ачивки) закрываются маской `mask=[...]` с `mask_color`. Перед снимком тест дожидается нужного состояния элемента через `expect`.
+- **Параметризация.** Скриншоты формы премиума проверяются для разных диапазонов дней (скидочные пороги < 30, 30–180, 180–365, > 365), форма оплаты — для невалидного номера карты и срока действия.
+- **Allure-разметка.** Шаги теста описаны на русском через `allure.step`, используются `@allure.title`, `@allure.suite`, `@allure.tag`.
 
-## Collaborate with your team
+## Покрытые сценарии
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### E2E
 
-## Test and Deploy
+| Тест | Что проверяет |
+|---|---|
+| `test_login` | Редирект неавторизованного пользователя на `/login`, вход по email и паролю, отображение бейджа тренера |
+| `test_navigation_to_trainer_profile` | Переход с главной страницы в профиль тренера |
+| `test_navigation_to_premium_page` | Переход из профиля на страницу Pokemon Premium |
+| `test_beginning_achievement_is_active` | Ачивка «Начало» в профиле активна |
+| `test_premium_purchase_success` | Полный флоу покупки премиума: выбор количества дней → форма карты → 3DS-код → успешная оплата → проверка чека |
+| `test_cancel_premium_success` | Отмена подписки с подтверждением в диалоге |
 
-Use the built-in continuous integration in GitLab.
+### Скриншот-тесты
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+| Тест | Эталоны |
+|---|---|
+| `test_buy_premium_visual` | `buy_premium_form_*.png` — форма покупки для четырёх диапазонов дней |
+| `test_empty_card_details_form_empty_visual` | `empty_card_details_form.png` |
+| `test_filled_card_details_form_visual` | `filled_card_details_form.png` |
+| `test_invalid_invalid_inputs_visual` | `invalid_card_number.png`, `invalid_expiry.png` |
+| `test_trainer_stats_visual` | `trainer_stats.png` — блок характеристик тренера с замаскированными динамическими значениями |
 
-***
+## Установка
 
-# Editing this README
+```bash
+git clone <url-репозитория>
+cd pokemonbattle_e2e_tests_playwright
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-## Suggestions for a good README
+pip install -r requirements.txt
+playwright install chromium
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+> `requirements.txt` сохранён в кодировке UTF-16 (так получается при `pip freeze > requirements.txt` в PowerShell). Если `pip` не может его прочитать, пересохрани файл в UTF-8.
 
-## Name
-Choose a self-explaining name for your project.
+## Переменные окружения
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Тестам нужен файл `.env` в корне проекта со следующими переменными:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```dotenv
+# тренер
+LOGIN=               # email тестового тренера
+PASSWORD=            # пароль
+USER_TRAINER_TOKEN=  # API-токен тренера (заголовок trainer_token)
+TRAINER_ID=          # ID тренера
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+# тестовые карты
+VISA=                # номер карты для оплаты
+MASTERCARD=
+DUE_DATE=            # срок действия, формат MM/YY
+SUCCESS_CVV=
+FAIL_CVV=
+CARD_NAME=           # имя держателя карты
+SECURE_CODE=         # 3DS-код подтверждения
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Запуск тестов
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+# все тесты
+pytest
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+# только E2E
+pytest tests/e2e
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+# только скриншот-тесты
+pytest tests/screenshot
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+# с видимым браузером и замедлением
+pytest --headed --slowmo 300
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+# обновить эталонные скриншоты
+pytest tests/screenshot --update-snapshots
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Эталонные скриншоты лежат в `tests/screenshot/__snapshots__/chromium/win32/`. Они сняты в Chromium на Windows, поэтому на другой ОС или в другом браузере (например, в Linux CI) из-за разного рендеринга шрифтов эталоны нужно будет снять заново.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Allure-отчёт
 
-## License
-For open source projects, say how it is licensed.
+```bash
+pytest --alluredir=allure-results
+allure serve allure-results
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Для `allure serve` нужен установленный [Allure CLI](https://allurereport.org/docs/install/).
