@@ -105,8 +105,6 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-> `requirements.txt` сохранён в кодировке UTF-16 (так получается при `pip freeze > requirements.txt` в PowerShell). Если `pip` не может его прочитать, пересохрани файл в UTF-8.
-
 ## Переменные окружения
 
 Тестам нужен файл `.env` в корне проекта. Он добавлен в `.gitignore` и не попадает в репозиторий. Шаблон с перечнем переменных лежит в `.env.example`:
