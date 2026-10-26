@@ -53,6 +53,7 @@
 │       ├── test_screenshot_card_details_form.py
 │       ├── test_screenshot_trainer_profile_page.py
 │       └── __snapshots__/         # эталонные скриншоты (chromium/win32)
+├── .env.example                   # шаблон переменных окружения
 ├── conftest.py                    # подключение плагинов с фикстурами
 ├── pytest.ini
 └── requirements.txt
@@ -108,7 +109,11 @@ playwright install chromium
 
 ## Переменные окружения
 
-Тестам нужен файл `.env` в корне проекта со следующими переменными:
+Тестам нужен файл `.env` в корне проекта. Он добавлен в `.gitignore` и не попадает в репозиторий. Шаблон с перечнем переменных лежит в `.env.example`:
+
+```bash
+cp .env.example .env   # и заполни значения
+```
 
 ```dotenv
 # тренер
